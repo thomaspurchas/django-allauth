@@ -5,13 +5,15 @@ from allauth.socialaccount.providers.oauth.provider import OAuthProvider
 
 class WarwickAccount(ProviderAccount):
     def get_screen_name(self):
-        return self.account.extra_data.get('screen_name')
+        first = self.account.extra_data.get('firstname')
+        last = self.account.extra_data.get('lastname')
+        return ' '.join([first,last])
 
     def get_profile_url(self):
         ret = None
         screen_name = self.get_screen_name()
         if screen_name:
-            ret = 'http://twitter.com/' + screen_name
+            ret = '' + screen_name
         return ret
 
     def get_avatar_url(self):
