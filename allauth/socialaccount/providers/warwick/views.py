@@ -38,7 +38,7 @@ class WarwickOAuthAdapter(OAuthAdapter):
         client = WarwickAPI(request, app.client_id, app.secret,
                             self.request_token_url)
         extra_data = client.get_user_info()
-        uid = extra_data['id']
+        uid = extra_data['user']
         user = User(username=extra_data['user'],
                     email=extra_data.get('email', ''),
                     first_name=extra_data.get('firstname', ''),
