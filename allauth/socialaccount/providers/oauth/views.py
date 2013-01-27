@@ -8,6 +8,9 @@ from allauth.socialaccount.helpers import complete_social_login
 from allauth.socialaccount import providers
 from allauth.socialaccount.models import SocialToken, SocialLogin
 
+import logging
+logger = logging.getLogger(__name__)
+
 class OAuthAdapter(object):
 
     def complete_login(self, request, app):
@@ -85,5 +88,6 @@ class OAuthCallbackView(OAuthView):
             login.state = SocialLogin.unmarshall_state \
                 (request.session.pop('oauth_login_state', None))
             return complete_social_login(request, login)
-        except OAuthError:
+        except OAuthError as e:
+            logging.warning(e)
             return render_authentication_error(request)
