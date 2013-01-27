@@ -11,7 +11,9 @@ import urllib2
 from django.http import HttpResponseRedirect
 from django.utils.translation import gettext as _
 
-from allauth.socialaccount.providers.oauth.client import OAuthError, get_token_prefix
+from allauth.socialaccount.providers.oauth.client import OAuthError, \
+                                                        get_token_prefix, \
+                                                        OAuthClient
 
 # parse_qsl was moved from the cgi namespace to urlparse in Python2.6.
 # this allows backwards compatibility
@@ -38,33 +40,14 @@ def _get_client(self, request, callback_url):
                          scope=scope)
     return client
 
-class OAuthClient(object):
+class OAuthClient(OAuthClient):
 
-    def __init__(self, request, consumer_key, consumer_secret, request_token_url,
-        access_token_url, authorization_url, callback_url, parameters=None, scope=None):
+    def __init__(self, *args, **kwargs):
 
-        self.request = request
+        self.scope = kwargs['scope']
+        del kwargs['scope']
 
-        self.request_token_url = request_token_url
-        self.access_token_url = access_token_url
-        self.authorization_url = authorization_url
-
-        self.consumer_key = consumer_key
-        self.consumer_secret = consumer_secret
-
-        self.consumer = oauth.Consumer(consumer_key, consumer_secret)
-        self.client = oauth.Client(self.consumer)
-
-        self.signature_method = oauth.SignatureMethod_HMAC_SHA1()
-
-        self.parameters = parameters
-
-        self.callback_url = callback_url
-
-        self.errors = []
-        self.request_token = None
-        self.access_token = None
-        self.scope = scope
+        super(OAuthClient, self).__init__(*args, **kwargs)
 
     def _get_request_token(self):
         """
@@ -84,7 +67,6 @@ class OAuthClient(object):
                 scope = 'scope=' + self.scope
             response, content = self.client.request(rt_url, "POST", body=scope)
             if response['status'] != '200':
-                print response
                 raise OAuthError(
                     _('Invalid response while obtaining request token from "%s".') % get_token_prefix(self.request_token_url))
             self.request_token = dict(parse_qsl(content))
@@ -105,40 +87,9 @@ class OAuthClient(object):
 
             response, content = self.client.request(at_url, "POST")
             if response['status'] != '200':
-                print response
                 raise OAuthError(
                     _('Invalid response while obtaining access token from "%s".') % get_token_prefix(self.request_token_url))
             self.access_token = dict(parse_qsl(content))
 
             self.request.session['oauth_%s_access_token' % get_token_prefix(self.request_token_url)] = self.access_token
         return self.access_token
-
-    def _get_rt_from_session(self):
-        """
-        Returns the request token cached in the session by ``_get_request_token``
-        """
-        try:
-            return self.request.session['oauth_%s_request_token' % get_token_prefix(self.request_token_url)]
-        except KeyError:
-            raise OAuthError(_('No request token saved for "%s".') % get_token_prefix(self.request_token_url))
-
-    def _get_authorization_url(self):
-        request_token = self._get_request_token()
-        return '%s?oauth_token=%s&oauth_callback=%s' % (self.authorization_url,
-            request_token['oauth_token'], self.request.build_absolute_uri(self.callback_url))
-
-    def is_valid(self):
-        try:
-            self._get_rt_from_session()
-            self.get_access_token()
-        except OAuthError, e:
-            self.errors.append(e.args[0])
-            return False
-        return True
-
-    def get_redirect(self):
-        """
-        Returns a ``HttpResponseRedirect`` object to redirect the user to the
-        URL the OAuth provider handles authorization.
-        """
-        return HttpResponseRedirect(self._get_authorization_url())
