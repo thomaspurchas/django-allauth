@@ -18,7 +18,6 @@ except ImportError:
 import requests
 from requests_oauthlib import OAuth1
 
-
 def get_token_prefix(url):
     """
     Returns a prefix for the token to store in the session so we can hold
@@ -86,10 +85,11 @@ class OAuthClient(object):
         """
         if self.access_token is None:
             request_token = self._get_rt_from_session()
-            oauth = OAuth1(self.consumer_key, 
+            oauth = OAuth1(self.consumer_key,
                            client_secret=self.consumer_secret,
-                           resource_owner_key=request_token['oauth_token'], 
+                           resource_owner_key=request_token['oauth_token'],
                            resource_owner_secret=request_token['oauth_token_secret'])
+
             at_url = self.access_token_url
             # Passing along oauth_verifier is required according to:
             # http://groups.google.com/group/twitter-development-talk/browse_frm/thread/472500cfe9e7cdb9#
