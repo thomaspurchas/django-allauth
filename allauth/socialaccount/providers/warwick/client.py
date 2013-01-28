@@ -23,6 +23,7 @@ except ImportError:
     from cgi import parse_qsl
 
 import oauth2 as oauth
+import certifi
 
 def _get_client(self, request, callback_url):
     provider = self.adapter.get_provider()
@@ -83,6 +84,7 @@ class OAuthClient(OAuthClient):
             token = oauth.Token(request_token['oauth_token'], request_token['oauth_token_secret'])
 
             self.client = oauth.Client(self.consumer, token)
+            self.client.ca_certs = certifi.where()
             at_url = self.access_token_url
 
             response, content = self.client.request(at_url, "POST")
