@@ -32,7 +32,7 @@ class WarwickAccount(ProviderAccount):
 
 class WarwickProvider(OAuthProvider):
     id = 'warwick'
-    name = 'Warwick'
+    name = 'University of Warwick'
     package = 'allauth.socialaccount.providers.warwick'
     account_class = WarwickAccount
         
