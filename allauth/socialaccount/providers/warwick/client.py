@@ -22,7 +22,8 @@ try:
 except ImportError:
     from cgi import parse_qsl
 
-import oauth2 as oauth
+import requests
+from requests_oauthlib import OAuth1
 import certifi
 
 def _get_client(self, request, callback_url):
@@ -62,36 +63,42 @@ class OAuthClient(OAuthClient):
             get_params['oauth_callback'] \
                 = self.request.build_absolute_uri(self.callback_url)
             rt_url = self.request_token_url
-            
+
             scope = []
             if self.scope:
                 scope = 'scope=' + self.scope
-            response, content = self.client.request(rt_url, "POST", body=scope)
-            if response['status'] != '200':
+            oauth = OAuth1(self.consumer_key, client_secret=self.consumer_secret)
+            response = requests.post(url=rt_url, auth=oauth, data=scope)
+            if response.status_code != 200:
                 raise OAuthError(
                     _('Invalid response while obtaining request token from "%s".') % get_token_prefix(self.request_token_url))
-            self.request_token = dict(parse_qsl(content))
+            self.request_token = dict(parse_qsl(response.text))
 
             self.request.session['oauth_%s_request_token' % get_token_prefix(self.request_token_url)] = self.request_token
         return self.request_token
 
-    def get_access_token(self):
-        """
-        Obtain the access token to access private resources at the API endpoint.
-        """
-        if self.access_token is None:
-            request_token = self._get_rt_from_session()
-            token = oauth.Token(request_token['oauth_token'], request_token['oauth_token_secret'])
+    # def get_access_token(self):
+    #     """
+    #     Obtain the access token to access private resources at the API endpoint.
+    #     """
+    #     if self.access_token is None:
+    #         request_token = self._get_rt_from_session()
+    #         oauth = OAuth1(self.consumer_key,
+    #                        client_secret=self.consumer_secret,
+    #                        resource_owner_key=request_token['oauth_token'],
+    #                        resource_owner_secret=request_token['oauth_token_secret'])
+    #         at_url = self.access_token_url
 
-            self.client = oauth.Client(self.consumer, token)
-            self.client.ca_certs = certifi.where()
-            at_url = self.access_token_url
+    #         # Passing along oauth_verifier is required according to:
+    #         # http://groups.google.com/group/twitter-development-talk/browse_frm/thread/472500cfe9e7cdb9#
+    #         # Though, the custom oauth_callback seems to work without it?
+    #         if 'oauth_verifier' in self.request.REQUEST:
+    #             at_url = at_url + '?' + urlencode({'oauth_verifier': self.request.REQUEST['oauth_verifier']})
+    #         response = requests.post(url=at_url, auth=oauth)
+    #         if response.status_code != 200:
+    #             raise OAuthError(
+    #                 _('Invalid response while obtaining access token from "%s".') % get_token_prefix(self.request_token_url))
+    #         self.access_token = dict(parse_qsl(response.text))
 
-            response, content = self.client.request(at_url, "POST")
-            if response['status'] != '200':
-                raise OAuthError(
-                    _('Invalid response while obtaining access token from "%s".') % get_token_prefix(self.request_token_url))
-            self.access_token = dict(parse_qsl(content))
-
-            self.request.session['oauth_%s_access_token' % get_token_prefix(self.request_token_url)] = self.access_token
-        return self.access_token
+    #         self.request.session['oauth_%s_access_token' % get_token_prefix(self.request_token_url)] = self.access_token
+    #     return self.access_token
