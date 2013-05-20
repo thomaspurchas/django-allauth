@@ -26,6 +26,9 @@ import requests
 from requests_oauthlib import OAuth1
 import certifi
 
+import logging
+logger = logging.getLogger(__name__)
+
 def _get_client(self, request, callback_url):
     provider = self.adapter.get_provider()
     app = provider.get_app(request)
@@ -64,12 +67,18 @@ class OAuthClient(OAuthClient):
                 = self.request.build_absolute_uri(self.callback_url)
             rt_url = self.request_token_url
 
-            scope = []
+            scope = ''
             if self.scope:
-                scope = 'scope=' + self.scope
+                scope = {'scope': self.scope}
             oauth = OAuth1(self.consumer_key, client_secret=self.consumer_secret)
-            response = requests.post(url=rt_url, auth=oauth, data=scope)
+
+            logging.debug('Requesting token with scope %s' % scope)
+
+            response = requests.post(url=rt_url, auth=oauth, params=scope)
+            logging.debug('Request content: %s' % response.request.body)
             if response.status_code != 200:
+                logging.warn('Invalid response while obtaining request token from "%s".' % get_token_prefix(self.request_token_url))
+                logging.warn(response.text)
                 raise OAuthError(
                     _('Invalid response while obtaining request token from "%s".') % get_token_prefix(self.request_token_url))
             self.request_token = dict(parse_qsl(response.text))
