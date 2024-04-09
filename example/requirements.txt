@@ -1,3 +1,6 @@
-django>=1.4.3
-django-allauth>=0.10.1
+django>=3.2.25
+django-allauth>=0.54.0
 
+certifi>=2023.7.22 # not directly required, pinned by Snyk to avoid a vulnerability
+pyjwt>=2.4.0 # not directly required, pinned by Snyk to avoid a vulnerability
+requests>=2.31.0 # not directly required, pinned by Snyk to avoid a vulnerability
