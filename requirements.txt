@@ -1,4 +1,4 @@
-django>=1.4.3
+django>=4.2.27
 # There is no OpenID lib that support both Python 2 and 3 from a single-source base.
 # So we have to choose between:
 # python-openid>=2.2.5
@@ -6,3 +6,5 @@ django>=1.4.3
 python-openid>=2.2.5
 requests>=1.0.3
 requests-oauthlib>=0.3.0
+sqlparse>=0.5.4 # not directly required, pinned by Snyk to avoid a vulnerability
+urllib3>=2.6.0 # not directly required, pinned by Snyk to avoid a vulnerability
